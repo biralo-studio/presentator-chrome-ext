@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Extension Icons</title>
+</head>
+<body>
+    <canvas id="canvas" width="128" height="128"></canvas>
+    
+    <script>
+        // Create simple camera icon for the extension
+        function createIcon(size) {
+            const canvas = document.getElementById('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Draw camera icon
+            const scale = size / 128;
+            
+            // Camera body
+            ctx.fillStyle = '#007cba';
+            ctx.fillRect(20 * scale, 40 * scale, 88 * scale, 60 * scale);
+            
+            // Camera lens
+            ctx.fillStyle = '#005a87';
+            ctx.beginPath();
+            ctx.arc(64 * scale, 70 * scale, 25 * scale, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Lens center
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(64 * scale, 70 * scale, 15 * scale, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Flash
+            ctx.fillStyle = '#ffff00';
+            ctx.fillRect(30 * scale, 30 * scale, 15 * scale, 15 * scale);
+            
+            // Viewfinder
+            ctx.fillStyle = '#333333';
+            ctx.fillRect(85 * scale, 25 * scale, 20 * scale, 10 * scale);
+            
+            return canvas.toDataURL('image/png');
+        }
+        
+        // Generate icons of different sizes
+        const sizes = [16, 32, 48, 128];
+        
+        sizes.forEach(size => {
+            const dataUrl = createIcon(size);
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.download = `icon${size}.png`;
+            link.href = dataUrl;
+            link.textContent = `Download ${size}x${size} icon`;
+            link.style.display = 'block';
+            link.style.margin = '10px';
+            document.body.appendChild(link);
+        });
+    </script>
+</body>
+</html>

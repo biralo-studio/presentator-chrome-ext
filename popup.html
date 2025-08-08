@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            width: 350px;
+            min-height: 400px;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            margin: 0;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .section {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        input[type="text"], input[type="password"], input[type="url"], select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #007cba;
+            box-shadow: 0 0 0 2px rgba(0, 124, 186, 0.1);
+        }
+        
+        button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        
+        .btn-primary {
+            background-color: #007cba;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #005a87;
+        }
+        
+        .btn-secondary {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 12px;
+        }
+        
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .capture-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .capture-options label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0;
+            cursor: pointer;
+            font-weight: normal;
+        }
+        
+        .capture-options input[type="radio"] {
+            margin-right: 5px;
+            width: auto;
+        }
+        
+        .user-info {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .user-info strong {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">📸 Presentator</div>
+        <div class="subtitle">Screenshot Uploader</div>
+    </div>
+    
+    <div id="status" class="status hidden"></div>
+    
+    <!-- Login Section -->
+    <div id="loginSection">
+        <div class="section">
+            <label for="serverUrl">Presentator Server URL:</label>
+            <input type="url" id="serverUrl" placeholder="https://your-presentator.com" required>
+        </div>
+        
+        <div class="section">
+            <label for="email">Email:</label>
+            <input type="text" id="email" placeholder="your@email.com" required>
+        </div>
+        
+        <div class="section">
+            <label for="password">Password:</label>
+            <input type="password" id="password" required>
+        </div>
+        
+        <button id="loginBtn" class="btn-primary">Login</button>
+    </div>
+    
+    <!-- Main Section (after login) -->
+    <div id="mainSection" class="hidden">
+        <div class="user-info">
+            <strong>Logged in as:</strong> <span id="userEmail"></span><br>
+            <strong>Server:</strong> <span id="currentServer"></span>
+        </div>
+        
+        <div class="section">
+            <label for="projectSelect">Project:</label>
+            <select id="projectSelect">
+                <option value="">Loading projects...</option>
+            </select>
+        </div>
+        
+        <div class="section">
+            <label for="prototypeSelect">Prototype:</label>
+            <select id="prototypeSelect" disabled>
+                <option value="">Select a project first</option>
+            </select>
+        </div>
+        
+        <div class="section">
+            <label>Screenshot Options:</label>
+            <div class="capture-options">
+                <label>
+                    <input type="radio" name="captureType" value="viewport" checked>
+                    Viewport Only
+                </label>
+                <label>
+                    <input type="radio" name="captureType" value="fullpage">
+                    Full Page
+                </label>
+            </div>
+        </div>
+        
+        <button id="captureBtn" class="btn-success" disabled>Capture & Upload Screenshot</button>
+        <button id="logoutBtn" class="btn-secondary">Logout</button>
+    </div>
+    
+    <script src="popup.js"></script>
+</body>
+</html>
