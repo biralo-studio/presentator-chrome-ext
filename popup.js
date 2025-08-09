@@ -282,20 +282,14 @@ class PresentatorExtension {
             // Get current tab
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
             
-            // Capture screenshot
-            const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: 'png' });
+            let finalDataUrl;
             
-            // If full page capture is requested, we need to use content script
-            let finalDataUrl = dataUrl;
-            if (captureType === 'fullpage') {
-                try {
-                    const response = await chrome.tabs.sendMessage(tab.id, { action: 'captureFullPage' });
-                    if (response && response.dataUrl) {
-                        finalDataUrl = response.dataUrl;
-                    }
-                } catch (error) {
-                    console.warn('Full page capture failed, using viewport capture:', error);
-                }
+            if (captureType === 'viewport') {
+                // Simple viewport capture
+                finalDataUrl = await chrome.tabs.captureVisibleTab(null, { format: 'png' });
+            } else {
+                // Full page capture
+                finalDataUrl = await this.captureFullPage(tab.id);
             }
 
             // Convert data URL to blob
@@ -314,6 +308,18 @@ class PresentatorExtension {
             
             if (uploadResult.success) {
                 this.showStatus('Screenshot uploaded successfully!', 'success');
+                
+                // Auto-open new tab with uploaded screen
+                const screen = uploadResult.screen;
+                const projectSelect = document.getElementById('projectSelect');
+                const selectedProject = projectSelect.options[projectSelect.selectedIndex];
+                const projectId = selectedProject.value;
+                
+                // Construct URL to view the uploaded screen in Presentator
+                const screenUrl = `${this.api.baseUrl}/#/projects/${projectId}/prototypes/${prototypeId}/screens/${screen.id}?mode=comments&fit=0`;
+                
+                // Open new tab
+                chrome.tabs.create({ url: screenUrl });
             } else {
                 this.showStatus(`Upload failed: ${uploadResult.error}`, 'error');
             }
@@ -322,6 +328,91 @@ class PresentatorExtension {
         }
 
         document.getElementById('captureBtn').disabled = false;
+    }
+
+    async captureFullPage(tabId) {
+        try {
+            // Get page dimensions from content script
+            const dimensions = await chrome.tabs.sendMessage(tabId, { action: 'getPageDimensions' });
+            
+            const {
+                pageWidth,
+                pageHeight,
+                viewportWidth,
+                viewportHeight,
+                originalScrollX,
+                originalScrollY
+            } = dimensions;
+
+            // If the page fits in the viewport, just capture it normally
+            if (pageHeight <= viewportHeight && pageWidth <= viewportWidth) {
+                return await chrome.tabs.captureVisibleTab(null, { format: 'png' });
+            }
+
+            // Create canvas for stitching screenshots
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = pageWidth;
+            canvas.height = pageHeight;
+
+            // Calculate how many screenshots we need
+            const numCols = Math.ceil(pageWidth / viewportWidth);
+            const numRows = Math.ceil(pageHeight / viewportHeight);
+
+            // Capture screenshots in a grid pattern
+            for (let row = 0; row < numRows; row++) {
+                for (let col = 0; col < numCols; col++) {
+                    const scrollX = col * viewportWidth;
+                    const scrollY = row * viewportHeight;
+
+                    // Scroll to position
+                    await chrome.tabs.sendMessage(tabId, {
+                        action: 'scrollToPosition',
+                        x: scrollX,
+                        y: scrollY
+                    });
+
+                    // Wait for scroll to complete
+                    await new Promise(resolve => setTimeout(resolve, 200));
+
+                    // Capture screenshot
+                    const screenshotDataUrl = await chrome.tabs.captureVisibleTab(null, { format: 'png' });
+                    
+                    // Draw on canvas
+                    await new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            // Calculate the actual dimensions to draw (handle edge cases)
+                            const drawWidth = Math.min(viewportWidth, pageWidth - scrollX);
+                            const drawHeight = Math.min(viewportHeight, pageHeight - scrollY);
+                            
+                            ctx.drawImage(
+                                img,
+                                0, 0, drawWidth, drawHeight, // source rectangle
+                                scrollX, scrollY, drawWidth, drawHeight // destination rectangle
+                            );
+                            resolve();
+                        };
+                        img.src = screenshotDataUrl;
+                    });
+                }
+            }
+
+            // Restore original scroll position
+            await chrome.tabs.sendMessage(tabId, {
+                action: 'restoreScroll',
+                x: originalScrollX,
+                y: originalScrollY
+            });
+
+            // Return the stitched image as data URL
+            return canvas.toDataURL('image/png');
+
+        } catch (error) {
+            console.error('Full page capture error:', error);
+            // Fallback to viewport capture
+            return await chrome.tabs.captureVisibleTab(null, { format: 'png' });
+        }
     }
 
     showStatus(message, type) {
